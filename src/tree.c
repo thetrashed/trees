@@ -1,13 +1,8 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct tree_node {
-  char *node_data;
-  struct tree_node *child_node;
-  struct tree_node *level_node;
-} tree_node;
+#include "tree.h"
 
 /***********************Queue Implementation for BFS***************************/
 typedef struct queue_node {
@@ -89,6 +84,54 @@ void queue_print(queue_header *queue) {
 }
 /******************************************************************************/
 
+void insert_after_helper(tree_node *old_node, tree_node *new_node) {
+  if (!old_node->child_node) {
+    old_node->child_node = new_node;
+    return;
+  }
+  old_node = old_node->child_node;
+  while (old_node->level_node) {
+    old_node = old_node->level_node;
+  }
+  old_node->level_node = new_node;
+}
+
+void insert_at_helper(tree_node *old_node, tree_node *new_node) {
+  while (old_node->level_node) {
+    old_node = old_node->level_node;
+  }
+  old_node->level_node = new_node;
+}
+
+bool bfs_helper(queue_header **queue, char **comp_val,
+                tree_node **insertion_val,
+                void (*fn)(tree_node *, tree_node *)) {
+  tree_node *tmp;
+  while ((*queue)->start) {
+    tmp = (*queue)->start->tdata;
+
+    do {
+      if (strcmp(tmp->node_data, *comp_val) == 0) {
+        if (fn != NULL) {
+          fn(tmp, *insertion_val);
+        }
+        return true;
+      }
+
+      if (tmp->child_node) {
+        if (!enqueue(*queue, &tmp->child_node)) {
+          queue_free(*queue);
+          return false;
+        }
+      }
+      tmp = tmp->level_node;
+    } while (tmp);
+
+    free(dequeue(*queue));
+  }
+  return false;
+}
+
 tree_node *tree_init_node(char **value) {
   tree_node *new_node = malloc(sizeof(tree_node));
   if (!new_node) {
@@ -113,36 +156,14 @@ bool tree_insert_at_level(tree_node *root, char *value, char *level_of) {
   }
 
   queue_header *queue = queue_init();
-  tree_node *tmp;
   if (!enqueue(queue, &root)) {
     queue_free(queue);
     return false;
   }
 
-  while (queue->start) {
-    tmp = queue->start->tdata;
-
-    do {
-      if (strcmp(tmp->node_data, level_of) == 0) {
-        while (tmp->level_node) {
-          tmp = tmp->level_node;
-        }
-        tmp->level_node = new_node;
-
-        queue_free(queue);
-        return true;
-      }
-
-      if (tmp->child_node) {
-        if (!enqueue(queue, &tmp->child_node)) {
-          queue_free(queue);
-          return false;
-        }
-      }
-      tmp = tmp->level_node;
-    } while (tmp);
-
-    free(dequeue(queue));
+  if (bfs_helper(&queue, &level_of, &new_node, insert_at_helper)) {
+    queue_free(queue);
+    return true;
   }
 
   queue_free(queue);
@@ -161,42 +182,14 @@ bool tree_insert_after(tree_node *root, char *value, char *after) {
   }
 
   queue_header *queue = queue_init();
-  tree_node *tmp;
   if (!enqueue(queue, &root)) {
     queue_free(queue);
     return false;
   }
 
-  while (queue->start) {
-    tmp = queue->start->tdata;
-    do {
-      if (strcmp(tmp->node_data, after) == 0) {
-        if (!tmp->child_node) {
-          tmp->child_node = new_node;
-          goto cleanup_and_return;
-        }
-
-        tmp = tmp->child_node;
-        while (tmp->level_node) {
-          tmp = tmp->level_node;
-        }
-        tmp->level_node = new_node;
-
-      cleanup_and_return:
-        queue_free(queue);
-        return true;
-      }
-
-      if (tmp->child_node) {
-        if (!enqueue(queue, &tmp->child_node)) {
-          queue_free(queue);
-          return false;
-        }
-      }
-      tmp = tmp->level_node;
-    } while (tmp);
-
-    free(dequeue(queue));
+  if (bfs_helper(&queue, &after, &new_node, insert_after_helper)) {
+    queue_free(queue);
+    return true;
   }
 
   queue_free(queue);
@@ -209,30 +202,14 @@ bool tree_bfs(tree_node *root, char *search_value) {
   }
 
   queue_header *queue = queue_init();
-  tree_node *tmp;
   if (!enqueue(queue, &root)) {
     queue_free(queue);
     return false;
   }
 
-  while (queue->start) {
-    tmp = queue->start->tdata;
-    do {
-      if (strcmp(tmp->node_data, search_value) == 0) {
-        queue_free(queue);
-        return true;
-      }
-
-      if (tmp->child_node) {
-        if (!enqueue(queue, &tmp->child_node)) {
-          queue_free(queue);
-          return false;
-        }
-      }
-      tmp = tmp->level_node;
-    } while (tmp);
-
-    free(dequeue(queue));
+  if (bfs_helper(&queue, &search_value, NULL, NULL)) {
+    queue_free(queue);
+    return true;
   }
 
   queue_free(queue);
@@ -256,6 +233,20 @@ bool tree_dfs(tree_node *root, char *search_value) {
   return search_result;
 }
 
+void tree_traverse_preorder(tree_node *root) {
+  if (!root) {
+    return;
+  }
+
+  printf("%s  ", root->node_data);
+  if (root->child_node) {
+    tree_traverse_preorder(root->child_node);
+  }
+  if (root->level_node) {
+    tree_traverse_preorder(root->level_node);
+  }
+}
+
 void tree_free(tree_node *root) {
   if (root) {
     if (root->child_node) {
@@ -266,38 +257,4 @@ void tree_free(tree_node *root) {
     }
     free(root);
   }
-}
-
-int main() {
-  tree_node *root = malloc(sizeof(tree_node));
-  if (!root) {
-    return 1;
-  }
-
-  root->node_data = "int";
-  root->level_node = NULL;
-  root->child_node = NULL;
-
-  tree_insert_at_level(root, "hello", "int");
-  tree_insert_at_level(root, "world", "int");
-  tree_insert_at_level(root, "bye", "int");
-  tree_insert_at_level(root, "int2", "int");
-  tree_insert_at_level(root, "10000088888888", "int");
-  tree_insert_at_level(root, "1", "int");
-  tree_insert_at_level(root, "100", "int");
-  tree_insert_at_level(root, "in312", "int");
-  tree_insert_after(root, "secondary", "int");
-
-  printf("\nDFS:\n");
-  printf("%d\n", tree_dfs(root, "hello"));
-  printf("%d\n", tree_dfs(root, "hellow"));
-  printf("%d\n", tree_dfs(root, "secondary"));
-
-  printf("\nBFS:\n");
-  printf("%d\n", tree_bfs(root, "hello"));
-  printf("%d\n", tree_bfs(root, "hellow"));
-  printf("%d\n", tree_bfs(root, "secondary"));
-
-  tree_free(root);
-  return 0;
 }
