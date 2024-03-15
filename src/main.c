@@ -28,6 +28,10 @@ int main() {
 
   tree_insert_after(root, "Intermediate Destinations", "United States");
   tree_insert_after(root, "Europe", "Intermediate Destinations");
+  tree_node *tmp1 = tree_find_node(root, "Europe");
+  tree_node *tmp2 = tree_find_node(root, "Mexico City");
+  tmp1->child_node = tmp2;
+
   tree_insert_after(root, "Germany", "Europe");
   tree_insert_after(root, "Frankfurt", "Germany");
   tree_insert_after(root, "Munich", "Frankfurt");
@@ -35,6 +39,10 @@ int main() {
 
   tree_insert_after(root, "Other Countries", "Intermediate Destinations");
   tree_insert_after(root, "Asia", "Other Countries");
+  tmp1 = tree_find_node(root, "Asia");
+  tmp2 = tree_find_node(root, "Frankfurt");
+  tmp1->child_node = tmp2;
+
   tree_insert_after(root, "Athens", "Asia");
   tree_insert_after(root, "Budapest", "Athens");
 

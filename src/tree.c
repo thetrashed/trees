@@ -4,7 +4,7 @@
 
 #include "tree.h"
 
-/***********************Queue Implementation for BFS***************************/
+/********************** Queue Implementation for BFS **************************/
 typedef struct queue_node {
   tree_node *tdata;
   struct queue_node *next;
@@ -82,8 +82,9 @@ void queue_print(queue_header *queue) {
   }
   printf("\n");
 }
-/******************************************************************************/
-
+/******************************************************************************
+ ******************************************************************************
+ ************************** Helper Functions **********************************/
 void insert_after_helper(tree_node *old_node, tree_node *new_node) {
   if (!old_node->child_node) {
     old_node->child_node = new_node;
@@ -112,7 +113,7 @@ bool bfs_helper(queue_header **queue, char **comp_val,
 
     do {
       if (strcmp(tmp->node_data, *comp_val) == 0) {
-        if (fn != NULL) {
+        if (fn) {
           fn(tmp, *insertion_val);
         }
         return true;
@@ -131,6 +132,7 @@ bool bfs_helper(queue_header **queue, char **comp_val,
   }
   return false;
 }
+/******************************************************************************/
 
 tree_node *tree_init_node(char **value) {
   tree_node *new_node = malloc(sizeof(tree_node));
@@ -233,6 +235,22 @@ bool tree_dfs(tree_node *root, char *search_value) {
   return search_result;
 }
 
+tree_node *tree_find_node(tree_node *root, char *search_value) {
+  if (!root) {
+    return NULL;
+  }
+
+  if (strcmp(root->node_data, search_value) == 0) {
+    return root;
+  }
+
+  tree_node *ret_value = tree_find_node(root->child_node, search_value);
+  if (!ret_value) {
+    ret_value = tree_find_node(root->level_node, search_value);
+  }
+  return ret_value;
+}
+
 void tree_traverse_preorder(tree_node *root) {
   if (!root) {
     return;
@@ -247,14 +265,49 @@ void tree_traverse_preorder(tree_node *root) {
   }
 }
 
+bool in_queue(queue_header *queue, tree_node *node) {
+  queue_node *tmp = queue->start;
+  while (tmp) {
+    if (tmp->tdata == node) {
+      return true;
+    }
+    tmp = tmp->next;
+  }
+  return false;
+}
+
 void tree_free(tree_node *root) {
   if (root) {
-    if (root->child_node) {
-      tree_free(root->child_node);
+    queue_header *queue = queue_init();
+    if (!queue)
+      return;
+
+    if (!enqueue(queue, &root)) {
+      goto cleanup;
     }
-    if (root->level_node) {
-      tree_free(root->level_node);
+    tree_node *tmp1, *tmp2;
+    while (queue->start) {
+      tmp1 = queue->start->tdata;
+      do {
+        if (tmp1->child_node && !in_queue(queue, tmp1->child_node)) {
+          if (!enqueue(queue, &tmp1->child_node)) {
+            goto cleanup;
+          }
+        }
+
+        if (!in_queue(queue, tmp1)) {
+          tmp2 = tmp1;
+          tmp1 = tmp1->level_node;
+          free(tmp2);
+          continue;
+        }
+        tmp1 = tmp1->level_node;
+      } while (tmp1);
+      queue_node *queue_tmp = dequeue(queue);
+      free(queue_tmp->tdata);
+      free(queue_tmp);
     }
-    free(root);
+  cleanup:
+    queue_free(queue);
   }
 }

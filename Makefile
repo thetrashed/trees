@@ -7,7 +7,7 @@ CC       := gcc
 CFLAGS   := -Wall -Wextra -O2 -I./$(SRCDIR)
 
 LINKER   := gcc
-LFLAGS   := -Wall -Wextra -std=c99 -Wno-missing-braces
+LFLAGS   := -Wall -Wextra -Wpedantic -Wno-missing-braces -std=c99
 
 SOURCES  := $(wildcard $(SRCDIR)/*.c)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
