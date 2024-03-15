@@ -4,6 +4,12 @@
 
 #include "tree.h"
 
+struct tree_node {
+  char *node_data;
+  struct tree_node *child_node;
+  struct tree_node *level_node;
+};
+
 /********************** Queue Implementation for BFS **************************/
 typedef struct queue_node {
   tree_node *tdata;
@@ -144,6 +150,34 @@ tree_node *tree_init_node(char **value) {
 
   new_node->node_data = *value;
   return new_node;
+}
+
+tree_node *tree_init(char *value) {
+  tree_node *new_node = malloc(sizeof(tree_node));
+  if (!new_node) {
+    return NULL;
+  }
+  new_node->child_node = NULL;
+  new_node->level_node = NULL;
+  new_node->node_data = value;
+
+  return new_node;
+}
+
+void tree_insert_child(tree_node *root, tree_node *insertion_node) {
+  if (!root->child_node) {
+    root->child_node = insertion_node;
+    return;
+  }
+
+  tree_node *tmp_child = root->child_node;
+  root->child_node = insertion_node;
+
+  tree_node *tmp_level = root->child_node;
+  while (tmp_level->level_node) {
+    tmp_level = tmp_level->level_node;
+  }
+  tmp_level->level_node = tmp_child;
 }
 
 bool tree_insert_at_level(tree_node *root, char *value, char *level_of) {

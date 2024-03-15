@@ -4,14 +4,14 @@
 #include "tree.h"
 
 int main() {
-  tree_node *root = malloc(sizeof(tree_node));
+  tree_node *root = tree_init("United States");
   if (!root) {
     return 1;
   }
 
-  root->node_data = "United States";
-  root->level_node = NULL;
-  root->child_node = NULL;
+  /* root->node_data = "United States"; */
+  /* root->level_node = NULL; */
+  /* root->child_node = NULL; */
 
   tree_insert_after(root, "USA", "United States");
   tree_insert_after(root, "Canada", "USA");
@@ -30,7 +30,7 @@ int main() {
   tree_insert_after(root, "Europe", "Intermediate Destinations");
   tree_node *tmp1 = tree_find_node(root, "Europe");
   tree_node *tmp2 = tree_find_node(root, "Mexico City");
-  tmp1->child_node = tmp2;
+  tree_insert_child(tmp1, tmp2);
 
   tree_insert_after(root, "Germany", "Europe");
   tree_insert_after(root, "Frankfurt", "Germany");
@@ -41,7 +41,7 @@ int main() {
   tree_insert_after(root, "Asia", "Other Countries");
   tmp1 = tree_find_node(root, "Asia");
   tmp2 = tree_find_node(root, "Frankfurt");
-  tmp1->child_node = tmp2;
+  tree_insert_child(tmp1, tmp2);
 
   tree_insert_after(root, "Athens", "Asia");
   tree_insert_after(root, "Budapest", "Athens");
