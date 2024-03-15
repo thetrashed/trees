@@ -4,6 +4,19 @@
 
 #include "tree.h"
 
+// The tree_node structure for n-ary trees. A visual representation of the trees
+// generated is as follows:
+//  A
+//  |
+//  B -- C -- D -- E
+//  |    |
+//  |    H -- I
+//  F -- G
+//
+// A -> the root node
+// B, C, D, E -> children of the root node, all at the same level
+// F, G -> children of the B node, at the same level
+// H, I -> children of the C node, at the same level
 struct tree_node {
   char *node_data;
   struct tree_node *child_node;
@@ -21,6 +34,7 @@ typedef struct queue_header {
   queue_node *end;
 } queue_header;
 
+// Returns a queue_header, with start and end NULL'd
 queue_header *queue_init() {
   queue_header *ret_val = malloc(sizeof(queue_header));
   if (!ret_val) {
@@ -32,6 +46,7 @@ queue_header *queue_init() {
   return ret_val;
 }
 
+// Add a new node to the end of the queue. Returns false if the addition fails
 bool enqueue(queue_header *queue, tree_node **new) {
   if (!queue->start) {
     queue->start = malloc(sizeof(queue_node));
@@ -57,6 +72,8 @@ bool enqueue(queue_header *queue, tree_node **new) {
   return true;
 }
 
+// Remove the front-most element from the queue and return it to the user.
+// Memory must be free'd by the user themselves
 queue_node *dequeue(queue_header *queue) {
   if (!queue->start) {
     return NULL;
@@ -68,6 +85,7 @@ queue_node *dequeue(queue_header *queue) {
   return ret_node;
 }
 
+// Free the memory allocated for the queue
 void queue_free(queue_header *queue) {
   if (queue) {
     queue_node *tmp = queue->start;
@@ -87,6 +105,18 @@ void queue_print(queue_header *queue) {
     tmp = tmp->next;
   }
   printf("\n");
+}
+
+// Checks whether a value, tree_node, is present in the queue
+bool in_queue(queue_header *queue, tree_node *node) {
+  queue_node *tmp = queue->start;
+  while (tmp) {
+    if (tmp->tdata == node) {
+      return true;
+    }
+    tmp = tmp->next;
+  }
+  return false;
 }
 /******************************************************************************
  ******************************************************************************
@@ -110,6 +140,9 @@ void insert_at_helper(tree_node *old_node, tree_node *new_node) {
   old_node->level_node = new_node;
 }
 
+// Generic implementation for use in the trees for the BFS. Takes in a function
+// pointer for performing tasks such as insert_after and insert_at. Uses queues
+// to implement BFS
 bool bfs_helper(queue_header **queue, char **comp_val,
                 tree_node **insertion_val,
                 void (*fn)(tree_node *, tree_node *)) {
@@ -140,6 +173,7 @@ bool bfs_helper(queue_header **queue, char **comp_val,
 }
 /******************************************************************************/
 
+// Initialises a new tree_node. Only for internal usage.
 tree_node *tree_init_node(char **value) {
   tree_node *new_node = malloc(sizeof(tree_node));
   if (!new_node) {
@@ -152,6 +186,8 @@ tree_node *tree_init_node(char **value) {
   return new_node;
 }
 
+// For initialising the root node, or any other node which may then be added to
+// the tree using the tree_insert_child function
 tree_node *tree_init(char *value) {
   tree_node *new_node = malloc(sizeof(tree_node));
   if (!new_node) {
@@ -164,6 +200,9 @@ tree_node *tree_init(char *value) {
   return new_node;
 }
 
+// Inserts the child_node after the root that is provided. If a child_node is
+// already present for the root, it inserts the new_child before the previous
+// the node, and move the previous one to the end of the new_node's level.
 void tree_insert_child(tree_node *root, tree_node *insertion_node) {
   if (!root->child_node) {
     root->child_node = insertion_node;
@@ -180,6 +219,8 @@ void tree_insert_child(tree_node *root, tree_node *insertion_node) {
   tmp_level->level_node = tmp_child;
 }
 
+// Inserts a new node at the same level as the value of level_of, which is found
+// using BFS
 bool tree_insert_at_level(tree_node *root, char *value, char *level_of) {
   if (!root->node_data) {
     root->node_data = value;
@@ -206,6 +247,8 @@ bool tree_insert_at_level(tree_node *root, char *value, char *level_of) {
   return false;
 }
 
+// Inserts the new value to the child level of the after value. Uses BFS to find
+// the after value.
 bool tree_insert_after(tree_node *root, char *value, char *after) {
   if (!root->node_data) {
     root->node_data = value;
@@ -232,6 +275,7 @@ bool tree_insert_after(tree_node *root, char *value, char *after) {
   return false;
 }
 
+// Searches the tree for the search_value using BFS
 bool tree_bfs(tree_node *root, char *search_value) {
   if (!root) {
     return false;
@@ -252,6 +296,7 @@ bool tree_bfs(tree_node *root, char *search_value) {
   return false;
 }
 
+// Searches the tree for the search_value using DFS
 bool tree_dfs(tree_node *root, char *search_value) {
   if (!root) {
     return false;
@@ -269,6 +314,7 @@ bool tree_dfs(tree_node *root, char *search_value) {
   return search_result;
 }
 
+// Finds the node with search_value and returns a pointer to that node. Uses DFS
 tree_node *tree_find_node(tree_node *root, char *search_value) {
   if (!root) {
     return NULL;
@@ -285,6 +331,7 @@ tree_node *tree_find_node(tree_node *root, char *search_value) {
   return ret_value;
 }
 
+// Prints the tree using preorder traversal
 void tree_traverse_preorder(tree_node *root) {
   if (!root) {
     return;
@@ -299,17 +346,8 @@ void tree_traverse_preorder(tree_node *root) {
   }
 }
 
-bool in_queue(queue_header *queue, tree_node *node) {
-  queue_node *tmp = queue->start;
-  while (tmp) {
-    if (tmp->tdata == node) {
-      return true;
-    }
-    tmp = tmp->next;
-  }
-  return false;
-}
-
+// Frees the memory allocated by the tree. Ensures that cyclic nodes are not
+// doubly free'd by using a queue for the proper freeing
 void tree_free(tree_node *root) {
   if (root) {
     queue_header *queue = queue_init();
