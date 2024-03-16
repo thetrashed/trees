@@ -331,6 +331,20 @@ tree_node *tree_find_node(tree_node *root, char *search_value) {
   return ret_value;
 }
 
+// Checks if a value is present after a certain value in the tree.
+bool tree_find_after(tree_node *root, char *initial_value, char *search_value) {
+  if (!root) {
+    return false;
+  }
+
+  tree_node *new_root_node = tree_find_node(root, initial_value);
+  if (!new_root_node) {
+    return false;
+  }
+
+  return tree_bfs(new_root_node, search_value);
+}
+
 // Prints the tree using preorder traversal
 void tree_traverse_preorder(tree_node *root) {
   if (!root) {

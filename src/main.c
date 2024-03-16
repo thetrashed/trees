@@ -58,6 +58,9 @@ int main() {
   printf("%d\n", tree_bfs(root, "Rome"));
   printf("%d\n", tree_bfs(root, "Vienna"));
 
+  printf("\n%d\n", tree_find_after(root, "Toronto", "Vienna"));
+  printf("%d\n", tree_find_after(root, "Toronto", "Rome"));
+
   tree_free(root);
   return 0;
 }
